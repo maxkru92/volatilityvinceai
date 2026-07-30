@@ -4,15 +4,13 @@ node_modules/
 .vercel
 .env
 .env.local
-# Exclude ONLY the raw _render.py pack artefacts; the deployed canonical
-# names (favicon.ico, apple-touch-icon.png, kc-<variant>.svg, ...) MUST stay
-# tracked because Vercel serves whatever is in git on the main branch.
-kc-*-fg.png
-kc-*-bg.png
-kc-*-adaptive.xml
-kc-*-256.png
-kc-*-512.png
-kc-*-1024.png
+# Exclude ALL raw _render.py pack artefacts; KEEP deployed canonical
+# filenames (favicon.ico, apple-touch-icon.png, kc-<variant>.svg, etc.)
+# tracked because Vercel serves whatever is in git on main.
+kc-*.png
+kc-*.svg
+kc-*.ico
+kc-*.xml
 manifest-*.webmanifest
 # keep public/ tracked even when empty between scaffolds
 !public/.gitkeep
