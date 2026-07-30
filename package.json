@@ -1,0 +1,21 @@
+{
+  "name": "kc-volatilityvinceai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Krupp Capital site scaffold \u2014 cyan (#00E5FF\u2192#00B8D4) on volatilityvinceai.vercel.app.",
+  "scripts": {
+    "dev": "npx serve public -l 3000",
+    "build": "echo \"no build step \u2014 public/ is the deployable\"",
+    "preview": "npx serve public -l 4173",
+    "kc:deploy": "cd \"/Users/maximiliankrupp/Desktop/kc-favicon-pack\" && python3 deploy.py --sites=volatilityvinceai",
+    "kc:list": "cd \"/Users/maximiliankrupp/Desktop/kc-favicon-pack\" && python3 deploy.py --list-sites"
+  },
+  "keywords": [
+    "krupp-capital",
+    "favicon-pack",
+    "cyan",
+    "volatilityvinceai.vercel.app"
+  ],
+  "author": "Krupp Capital",
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,13 @@
+node_modules/
+.DS_Store
+*.log
+.vercel
+.env.local
+public/icon-*.png
+public/apple-touch-icon.png
+public/og-image.png
+public/site.webmanifest
+public/favicon*
+public/manifest*
+# keep public/ itself tracked (empty dir)
+!public/.gitkeep
