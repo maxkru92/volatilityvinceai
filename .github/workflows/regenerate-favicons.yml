@@ -1,11 +1,17 @@
 name: regenerate-favicons
+# Auto-regenerates the favicon pack on every push to main.
+# PREREQUISITES:
+#   - Repo var KC_FAVICON_PACK_REPO (e.g. https://github.com/krupp-capital/kc-favicon-pack)
+#     OR set Repo secret KC_FAVICON_PACK_PAT (a PAT with read on the pack repo).
+#   - If your default branch requires PR-review protections, the auto-push will
+#     fail. Either disable that protection OR add Repo secret KC_REGENERATE_PAT
+#     (a PAT with write to this repo) and the workflow will pick it up.
 on:
   push:
     branches: [main]
   workflow_dispatch:
 permissions:
   contents: write
-
 jobs:
   regenerate:
     runs-on: ubuntu-latest
@@ -13,30 +19,40 @@ jobs:
       - name: checkout site repo
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.KC_REGENERATE_PAT || secrets.GITHUB_TOKEN }}
 
       - name: set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: locate kc-favicon-pack
+      - name: fetch kc-favicon-pack
+        id: pack
         env:
           KC_FAVICON_PACK_REPO: ${{ vars.KC_FAVICON_PACK_REPO }}
+          KC_FAVICON_PACK_PAT:  ${{ secrets.KC_FAVICON_PACK_PAT }}
+          KC_FAVICON_PACK_DIR:  ${{ vars.KC_FAVICON_PACK_DIR }}
         run: |
           if [ -n "$KC_FAVICON_PACK_REPO" ]; then
-            git clone --depth=1 "$KC_FAVICON_PACK_REPO" /tmp/kc-favicon-pack
-            echo "KC_FAVICON_PACK_DIR=/tmp/kc-favicon-pack" >> "$GITHUB_ENV"
+            URL="$KC_FAVICON_PACK_REPO"
+            [ -n "$KC_FAVICON_PACK_PAT" ] && URL="https://x-access-token:${KC_FAVICON_PACK_PAT}@${KC_FAVICON_PACK_REPO#https://}"
+            git clone --depth=1 "$URL" /tmp/kc-favicon-pack
+            echo "dir=/tmp/kc-favicon-pack" >> "$GITHUB_OUTPUT"
+          elif [ -n "$KC_FAVICON_PACK_DIR" ] && [ -d "$KC_FAVICON_PACK_DIR" ]; then
+            echo "dir=$KC_FAVICON_PACK_DIR" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::KC_FAVICON_PACK_REPO not set; using $KC_FAVICON_PACK_DIR or the path baked into package.json"
+            echo "::error::KC_FAVICON_PACK_REPO / KC_FAVICON_PACK_DIR not set; cannot fetch upstream"
+            exit 1
           fi
 
       - name: regenerate favicon pack
         env:
-          KC_FAVICON_PACK_DIR: ${{ env.KC_FAVICON_PACK_DIR }}
+          PACK_DIR: ${{ steps.pack.outputs.dir }}
         run: |
-          PACK="${KC_FAVICON_PACK_DIR:-/Users/maximiliankrupp/Desktop/kc-favicon-pack}/deploy.py"
-          "$PACK" --sites=volatilityvinceai         && echo "deploy:" "{"variant":"cyan","alias":"volatilityvinceai"}"      && (cd "$KC_FAVICON_PACK_DIR" && python3 _render.py) || true
+          ALIAS=volatilityvinceai
+          VARIANT=cyan
+          [ "$VARIANT" = "dark" ] && FLAG="--light-mode=paths" || FLAG=""
+          python3 "$PACK_DIR/deploy.py" --sites="$ALIAS" $FLAG
 
       - name: commit + push if changed
         run: |
@@ -48,3 +64,4 @@ jobs:
             git push
           else
             echo "no public/ changes; nothing to push"
+          fi

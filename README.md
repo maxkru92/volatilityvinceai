@@ -42,3 +42,6 @@ vercel deploy --prod
 ```
 
 Vercel auto-detects static-site mode and serves `public/` from the URL root.
+
+
+> **Note:** `package.json` no longer carries the `kc:deploy` script (removed to keep it portable across machines). The deploy recipe is documented above in **Regenerate favicons**.
