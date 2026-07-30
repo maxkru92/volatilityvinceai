@@ -1,0 +1,50 @@
+name: regenerate-favicons
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout site repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: locate kc-favicon-pack
+        env:
+          KC_FAVICON_PACK_REPO: ${{ vars.KC_FAVICON_PACK_REPO }}
+        run: |
+          if [ -n "$KC_FAVICON_PACK_REPO" ]; then
+            git clone --depth=1 "$KC_FAVICON_PACK_REPO" /tmp/kc-favicon-pack
+            echo "KC_FAVICON_PACK_DIR=/tmp/kc-favicon-pack" >> "$GITHUB_ENV"
+          else
+            echo "::warning::KC_FAVICON_PACK_REPO not set; using $KC_FAVICON_PACK_DIR or the path baked into package.json"
+          fi
+
+      - name: regenerate favicon pack
+        env:
+          KC_FAVICON_PACK_DIR: ${{ env.KC_FAVICON_PACK_DIR }}
+        run: |
+          PACK="${KC_FAVICON_PACK_DIR:-/Users/maximiliankrupp/Desktop/kc-favicon-pack}/deploy.py"
+          "$PACK" --sites=volatilityvinceai         && echo "deploy:" "{"variant":"cyan","alias":"volatilityvinceai"}"      && (cd "$KC_FAVICON_PACK_DIR" && python3 _render.py) || true
+
+      - name: commit + push if changed
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          if [ -n "$(git status --porcelain -- public/)" ]; then
+            git add -A
+            git commit -m 'chore: regenerate favicon pack [skip ci]'
+            git push
+          else
+            echo "no public/ changes; nothing to push"
